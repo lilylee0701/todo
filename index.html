@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Todo List</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.css">
+    <style>
+        .modal-header {
+            justify-content: space-around;
+        }
+        .modal-header button {
+            position: absolute;
+            left: 20px;
+            top: 0px;
+        }
+        .modal-header .close {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+         <div class="col-sm-8" id="lab" style="margin:0 auto">
+            <h2>Todo List
+                <span class="pull-right">
+                    <button
+                        v-on:click="newItemClick"
+                        id="newItem"
+                        class="btn btn-success btn-sm">
+                        <span
+                            class="glyphicon glyphicon-plus"
+                            aria-hidden="true">Add
+                        </span>
+                    </button>
+                </span>
+            </h2>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Content</th>
+                        <th scope="col">Edit</th>
+                        <th scope="col">Delete</th>
+                    </tr>
+                </thead>
+                <tbody v-for="itemsItem,index in newsList">
+                    <tr>
+                        <th scope="row">{{index + 1}}</th>
+                        <td>[{{itemsItem.ymd}}]</td>
+                        <td>{{itemsItem.title}}</td>
+                        <td>{{itemsItem.content}}</td>
+                        <td>
+                            <button
+                                v-on:click="editItemClick(index)"
+                                class="btn btn-info btn-xs editItem">
+                                <span
+                                    class="glyphicon glyphicon-pencil"
+                                    aria-hidden="true">Edit
+                                </span>
+                            </button>
+                        </td>
+                        <td>
+                            <button
+                                v-on:click="deleteItemClick(index)"
+                                class="btn btn-danger btn-xs deleteItem">
+                                <span
+                                    class="glyphicon glyphicon-remove"
+                                    aria-hidden="true">Dele
+                                </span>
+                            </button>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div> 
+
+<div id="itemsModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4>Add / Edit</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="titleTextBox">
+                            <span class="glyphicon glyphicon-bullhorn">Title</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="titleTextBox" v-model="title"
+                            class="form-control"
+                            placeholder="Enter Title" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ymdTextBox">
+                            <span class="glyphicon glyphicon-time">Date</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="ymdTextBox" v-model="ymd"
+                            class="form-control"
+                            placeholder="yyyy-mm-dd Ex: 2017-05-20">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contentTextBox">
+                            <span class="glyphicon glyphicon-pencil">Todo List</span>
+                        </label>
+                        <input
+                            type="text" 
+                            id="contentTextBox" v-model="content" 
+                            class="form-control" 
+                            placeholder="Enter Todo List">
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="pull-right">
+                    <button
+                        type="button"
+                        id="okButton"
+                        v-on:click="okButtonClick"
+                        class="btn btn-success">
+                        <span class="glyphicon glyphicon-ok">Save</span>
+                    </button>
+                    <button
+                        type="button"
+                        id="cancelButton"
+                        class="btn btn-default"
+                        data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove">Cancel</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+    let itemsModalApp = new Vue({
+        el: '#itemsModal',
+        data: {
+            currentIndex: 0,
+            title : '',
+            ymd : '',
+            content : '',
+            checkbox: '',
+        },
+        methods: {
+            okButtonClick: function() {
+                if(this.currentIndex < 0){
+                    let itemsItem = {
+                        title: this.title, 
+                        ymd: this.ymd,
+                        content: this.content,
+                        checkbox :this.checkbox 
+                    }
+                    $.ajax({
+                        type: 'post',
+                        url: '/home/items',
+                        data: itemsItem,
+                        success: function(e){
+                            alert(e);
+                        }
+                    })
+                    appItems.newsList.push(itemsItem);
+                }
+                else{
+                    //修改
+                    appItems.newsList[this.currentIndex].title = this.title
+                    appItems.newsList[this.currentIndex].ymd = this.ymd
+                    appItems.newsList[this.currentIndex].content = this.content
+                    $.ajax({
+                        type: 'put',
+                        url: '/home/items',
+                        data: appItems.newsList[this.currentIndex]
+                    }).then(function (e) {
+                        downloadFromServer()
+                    })  
+                }
+                $('itemsModal').modal('hide')
+            },
+        },
+    })
+
+    let appItems = new Vue({
+        el: '#lab',
+        data: {
+            testOK: 'DEMO',
+            newsList:[
+                { ymd: '2019-08-01', title: 'Today is 08/01.', content: 'Nothing to do.' },
+                { ymd: '2019-08-11', title: 'Today is 08/11.', content: 'Nothing to do.' },
+                { ymd: '2019-08-13', title: 'Today is 08/13.', content: 'Nothing to do.' },
+                { ymd: '2019-08-16', title: 'Today is 08/16.', content: 'Nothing to do.' },
+                { ymd: '2019-08-18', title: 'Today is 08/18.', content: 'Nothing to do.' },
+                { ymd: '2019-08-19', title: 'Today is 08/19.', content: 'Nothing to do.' },
+                { ymd: '2019-08-20', title: 'Today is 08/20.', content: 'Nothing to do.' },
+            ]
+        },
+        methods: {
+            newItemClick:function() {
+                itemsModalApp.currentIndex = -1
+                itemsModalApp.title = ''
+                itemsModalApp.ymd = ''
+                itemsModalApp.content = ''
+            $('#itemsModal').modal({ backdrop: 'static' })
+            },
+            editItemClick:function(idx) {
+                itemsModalApp.currentIndex = idx
+                itemsModalApp.title = this.newsList[idx].title
+                itemsModalApp.ymd = this.newsList[idx].ymd
+                itemsModalApp.content = this.newsList[idx].content
+                itemsModalApp.checkbox = this.newsList[idx].checkbox
+                $('#itemsModal').modal({ backdrop: 'static' })
+            },
+            deleteItemClick:function(idx) {
+                $.ajax({
+                    type: "delete",
+                    url: "/home/items",
+                    data: this.newsList[idx],
+                    success: function (e) {
+                        alert(e);
+                    }
+                })
+                this.newsList.splice(idx, 1)
+                downloadFromServer()
+            },
+        }
+    })
+    function downloadFromServer() {
+        $.ajax({
+            type: 'get',
+            url: '/home/items',
+        }).then(function (dataFromserver) {
+            appItems.newsList = JSON.parse(dataFromserver)
+        }) 
+    }
+    $(document).ready(function() {
+        downloadFromServer()
+    })
+</script>
+
+</body>
+</html>
